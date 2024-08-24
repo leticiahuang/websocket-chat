@@ -2,12 +2,18 @@
 <html>
 <head>
     <title>Chat</title>
+    <script src="chat.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="chatbox"></div>
-    <input type="text" id="message" placeholder="Type a message...">
-    <button onclick="sendMessage()">Send</button>
-
-    <script src="chat.js"></script>
+    <div id="page-container">
+        <h1 style="text-align: center; margin-top: 1rem;">Chat App</h1>
+        <div id="chatbox"></div>
+        <div id="send-container">
+            <textarea id="send-message" placeholder="Type a message..." wrap="soft"></textarea>
+            <button onclick="sendMessage()" id="send-btn">Send</button>
+        </div>
+    </div>
+    <button onclick="closeConnection()" style="margin-top:1rem">Exit Chat</button>
 </body>
 </html>

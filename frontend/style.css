@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Parisienne&display=swap');
+
+* {
+    margin: 0; 
+    padding: 0; 
+    font-family: "Inter", sans-serif;
+}
+
+html, body { 
+    height: 100%;
+    width:100%;
+    background-color: rgb(42, 42, 42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+} 
+
+p, h1 {
+    color: white;
+}
+
+#page-container {
+    background-color: rgb(50, 50, 50);
+    width: 750px;
+    height: 850px;
+    border-radius: 0.3rem;
+}
+
+#chatbox {
+    margin: 3rem 2rem;
+    height: 630px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.my-message {
+    background: rgb(197, 197, 197);
+    margin: 1rem 0;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    word-wrap: break-word;
+    width: 55%;
+    align-self: flex-end;
+}
+
+.others-message{
+    background: rgb(84, 134, 236);
+    margin: 1rem 0;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    word-wrap: break-word;
+    width: 55%;
+    align-self: flex-start;
+}
+
+#send-container {
+    margin: 2rem 2rem 0.5rem;
+}
+
+textarea {
+    width: 600px;
+    background: rgb(50, 50, 50);
+    border: none;
+    border-bottom: 1px solid rgb(197, 197, 197);
+    outline: none;
+    color: white;
+    font: 14px;
+    resize: none;
+}
+
+button {
+    background: rgb(197, 197, 197);
+    border: 1px solid rgb(197, 197, 197);
+    border-radius: 1rem;
+    padding: 0.1rem 0.4rem;
+}
+
+#send-btn {
+    height: 40px;
+    width: 65px;
+    margin-left: 1rem;
+}
