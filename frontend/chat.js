@@ -3,22 +3,26 @@ const ws = new WebSocket("ws://localhost:8765");
 // let is changable variable, const in constant
 let username = prompt("Create a username: ");
 let userId = null; // initialize user id
+let currentRoom = null;
 
 // Call the function to request permission
 requestNotificationPermission();
-
-// alert user when websocket connection created
 ws.onopen = () => {
     console.log("Connected to the WebSocket server!");
-    ws.send(`${username} has joined the chat!`);
-    showNotification(`Welcome, ${username}! You have joined the chat.`);
-    console.log(Notification.permission);
+    ws.send(JSON.stringify({ command: "newUserGetRooms" }));
 };
+
+// alert user when websocket connection created
+// ws.onopen = () => {
+//     console.log("Connected to the WebSocket server!");
+//     ws.send(JSON.stringify({ message: `${username} has joined the chat!` }));
+
+// };
+
 
 function closeConnection() {
     const exit = confirm("End the session?");
 	if(exit === "true") {
-        ws.send(`${username} has left the chat.`);
         ws.close();
     }
 };
@@ -27,36 +31,62 @@ function closeConnection() {
 ws.onmessage = (event) => {
     const chatbox = document.getElementById("chatbox");
     const message = document.createElement("div");
-    console.log(event.data);
-
     const data = JSON.parse(event.data);
+    console.log("parsed json data: ", data)
     const senderId = data.user_id;
-    const messageText = data.message;
+    var messageText = data.message;
+    const addRoom = data.addRoom;
+    const getRooms = data.getRooms; //for when users first sign in and have to populate room selection
+    const joinedRoom = data.joinedRoom;
+    const leftRoom = data.leftRoom;
+
+    if (getRooms != null) {
+        getRooms.forEach(element => {
+            updateRoomSelect(element);
+        });
+        return;
+    }
+
+    if (addRoom != null) {
+        updateRoomSelect(addRoom);
+        return;
+    } 
 
     if (!userId) {
         // If userId is not set, the first message should be your own join message
         userId = senderId;
     }
 
-    if (senderId === userId) {
+    if(joinedRoom === true) {
+        messageText = `${username} ${messageText}`;
+        console.log("messageText joinedroom: ", messageText);
+        message.classList.add('joined-left-room'); // Optional: Add a special class for styling
+    } else if (leftRoom === true) {
+        messageText = `${username} ${messageText}`;
+        console.log("messageText joinedroom: ", messageText);
+        message.classList.add('joined-left-room');
+    } else if (senderId === userId) {
         // This is the user's own message
         message.classList.add('my-message'); // Optional: Add a special class for styling
     } else {
         // This is a message from another user
-        showNotification("Chat App", messageText);
+        showNotification(messageText);
         message.classList.add('others-message');
     }
 
     message.textContent = messageText;
     chatbox.appendChild(message);
-    console.log(new Date().toLocaleTimeString([], { hour: '2-digit', minute: "2-digit" }));
 };
 
 // when user sends data to server at localhost
 function sendMessage() {
     const input = document.getElementById("send-message");
     const message = `${username}: ${input.value}`;
-    ws.send(message);
+    if (currentRoom) {
+        ws.send(JSON.stringify({ command: "message", message: message }))
+    } else {
+        alert("Please join a room first.");
+    }
     input.value = "";
 };
 
@@ -64,15 +94,53 @@ function sendMessage() {
 async function requestNotificationPermission() {
     Notification.requestPermission().then(permission => {
         if (permission != "granted") {
-            console.log("Notification permission already granted or denied:", permission);
         }
-        console.log("Notif granted:", permission);
     });
 };
 
-function showNotification(title, body) {
+function showNotification(body) {
     if (Notification.permission === "granted") {
-        console.log("hello");
         new Notification("Chat App", { body: body });
     }
+};
+
+function leaveRoom() {
+    if (currentRoom) {
+        ws.send(JSON.stringify({ command: "leave", room: currentRoom }));
+        currentRoom = null;
+        const chatbox = document.getElementById("chatbox");
+        chatbox.innerHTML = "";
+    } else {
+        alert("You are not in a room.");
+    }
+};
+
+function changeRoom() {
+    const roomSelect = document.getElementById("select-room");
+    joinRoom(roomSelect.value);
+};
+
+function createRoom() {
+    const newRoomName = document.getElementById("new-room-name").value.trim();
+    ws.send(JSON.stringify({ command: "createRoom", room: newRoomName }));
+    joinRoom(newRoomName);
+};
+
+function joinRoom(roomName) {
+    if (currentRoom) {
+        leaveRoom();
+    }
+    currentRoom = roomName;
+    console.log("info sent: ", JSON.stringify({ command: "join", room: roomName }))
+    ws.send(JSON.stringify({ command: "join", room: roomName }));
+    // alert(`Joined room '${roomName}'.`);
+    console.log("joined room!")
+};
+
+function updateRoomSelect(newRoomName) {
+    const roomSelect = document.getElementById("select-room");
+    const newOption = document.createElement("option");
+    newOption.value = newRoomName;
+    newOption.innerHTML = newRoomName;
+    roomSelect.appendChild(newOption);
 };

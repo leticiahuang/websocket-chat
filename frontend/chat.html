@@ -7,10 +7,19 @@
 </head>
 <body>
     <div id="page-container">
-        <h1 style="text-align: center; margin-top: 1rem;">Chat App</h1>
+        <h1 style="text-align: center; margin: 1rem 0;">Chat App</h1>
+        <div id="room-container">
+            <select name="select-room" id="select-room" onchange="changeRoom()">
+                <option value="">-- Select A Room --</option>
+            </select>
+            <div>
+                <input type="text" id="new-room-name" placeholder="Or Create A Room" style="width:77%">
+                <button onclick="createRoom()">Create</button>
+            </div>
+        </div>
         <div id="chatbox"></div>
         <div id="send-container">
-            <textarea id="send-message" placeholder="Type a message..." wrap="soft"></textarea>
+            <textarea id="send-message" wrap="soft"></textarea>
             <button onclick="sendMessage()" id="send-btn">Send</button>
         </div>
     </div>
