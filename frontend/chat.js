@@ -30,7 +30,7 @@ function closeConnection() {
 // event is when server sends user data
 ws.onmessage = (event) => {
     const chatbox = document.getElementById("chatbox");
-    const message = document.createElement("div");
+    var message = document.createElement("div");
     const data = JSON.parse(event.data);
     console.log("parsed json data: ", data)
     const senderId = data.user_id;
@@ -39,6 +39,7 @@ ws.onmessage = (event) => {
     const getRooms = data.getRooms; //for when users first sign in and have to populate room selection
     const joinedRoom = data.joinedRoom;
     const leftRoom = data.leftRoom;
+    const chatHistory = data.prevChats;
 
     if (getRooms != null) {
         getRooms.forEach(element => {
@@ -58,20 +59,16 @@ ws.onmessage = (event) => {
     }
 
     if(joinedRoom === true) {
-        messageText = `${username} ${messageText}`;
-        console.log("messageText joinedroom: ", messageText);
+        console.log("messageText joinedroom: ", username, messageText);
+        if (userId === senderId) {
+            loadChatHistory(chatHistory, chatbox);
+        }
         message.classList.add('joined-left-room'); // Optional: Add a special class for styling
     } else if (leftRoom === true) {
-        messageText = `${username} ${messageText}`;
         console.log("messageText joinedroom: ", messageText);
         message.classList.add('joined-left-room');
-    } else if (senderId === userId) {
-        // This is the user's own message
-        message.classList.add('my-message'); // Optional: Add a special class for styling
     } else {
-        // This is a message from another user
-        showNotification(messageText);
-        message.classList.add('others-message');
+        message = addMessageClass(message, messageText);
     }
 
     message.textContent = messageText;
@@ -106,7 +103,7 @@ function showNotification(body) {
 
 function leaveRoom() {
     if (currentRoom) {
-        ws.send(JSON.stringify({ command: "leave", room: currentRoom }));
+        ws.send(JSON.stringify({ command: "leave", username: username, room: currentRoom }));
         currentRoom = null;
         const chatbox = document.getElementById("chatbox");
         chatbox.innerHTML = "";
@@ -118,6 +115,7 @@ function leaveRoom() {
 function changeRoom() {
     const roomSelect = document.getElementById("select-room");
     joinRoom(roomSelect.value);
+    document.getElementById('select-room').selectedIndex = 0;
 };
 
 function createRoom() {
@@ -132,7 +130,7 @@ function joinRoom(roomName) {
     }
     currentRoom = roomName;
     console.log("info sent: ", JSON.stringify({ command: "join", room: roomName }))
-    ws.send(JSON.stringify({ command: "join", room: roomName }));
+    ws.send(JSON.stringify({ command: "join", room: roomName, username: username }));
     // alert(`Joined room '${roomName}'.`);
     console.log("joined room!")
 };
@@ -143,4 +141,29 @@ function updateRoomSelect(newRoomName) {
     newOption.value = newRoomName;
     newOption.innerHTML = newRoomName;
     roomSelect.appendChild(newOption);
+};
+
+function loadChatHistory(chatHistory, chatbox) {
+    console.log("------------chatHistroy: ", chatHistory);
+    chatHistory.forEach(element => {
+        const message = document.createElement("div");
+        message.textContent = element;
+        addMessageClass(message, element)
+        chatbox.appendChild(message);
+    });
+};
+
+function addMessageClass(message, messageText) {
+    const parsedText = messageText.split(":");
+    if (parsedText.length === 1) {
+        message.classList.add('joined-left-room');
+    } else if (parsedText[0] === username) {
+        // This is the user's own message
+        message.classList.add('my-message'); // Optional: Add a special class for styling
+    } else {
+        // This is a message from another user
+        showNotification(messageText);
+        message.classList.add('others-message');
+    }
+    return message;
 };

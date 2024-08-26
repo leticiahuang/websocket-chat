@@ -6,7 +6,8 @@ import logging
 
 # keep track of list of connected users 
 connected_users = set()
-rooms = {}
+room_users = {}
+chat_history = {}
 
 # multiple handle_user running, each user gets one run
 async def handle_user(websocket, path): 
@@ -24,37 +25,45 @@ async def handle_user(websocket, path):
             print("command: " + command)
 
             if command == "newUserGetRooms":
-                return_message = json.dumps({"getRooms": list(rooms.keys())})
+                return_message = json.dumps({"getRooms": list(room_users.keys())})
                 print("-----------server to client get room: " + return_message)
                 await websocket.send(return_message)
 
             elif command == "join":
                 room_name = json_message["room"]
-                rooms[room_name].add(websocket)
-                print("users in room: " + str(list(rooms[room_name])))
+                user_of_message = json_message["username"]
+                room_users[room_name].add(websocket)
+                print("users in room: " + str(list(room_users[room_name])))
                 curr_room = room_name
-                return_message = json.dumps({"user_id": user_id, "joinedRoom": True, "message": f"joined {room_name}"})
-                for user in rooms[curr_room]:
+                message_text = f"{user_of_message} joined {room_name}"
+                return_message = json.dumps({"user_id": user_id, "joinedRoom": True, "message": message_text, "prevChats": chat_history[room_name]})
+                chat_history[curr_room].append(message_text) 
+                for user in room_users[curr_room]:
                     await user.send(return_message)
 
             elif command == "leave":
-                rooms[curr_room].remove(websocket)
-                return_message = json.dumps({"user_id": user_id, "leftRoom": True, "message": f"left {json_message["room"]}"})
-                for user in rooms[curr_room]:
+                room_users[curr_room].remove(websocket)
+                user_of_message = json_message["username"]
+                message_text = f"{user_of_message} left {curr_room}"
+                return_message = json.dumps({"user_id": user_id, "leftRoom": True, "message": message_text})
+                chat_history[curr_room].append(message_text) 
+                for user in room_users[curr_room]:
                     await user.send(return_message)
                 curr_room = None
 
             elif command == "message" and curr_room:
                 message_text = json_message["message"]
                 return_message = json.dumps({"user_id": user_id, "message": message_text})
-                for user in rooms[curr_room]:
+                chat_history[curr_room].append(message_text) 
+                for user in room_users[curr_room]:
                     # if user != websocket:
                     # await allows us to handle other users while sending message to current user
                     await user.send(return_message)
 
             elif command == "createRoom":
                 room_name = json_message["room"]
-                rooms[room_name] = set()
+                room_users[room_name] = set()
+                chat_history[room_name] = list()
                 return_message = json.dumps({"addRoom": room_name})
                 for user in connected_users:
                     await user.send(return_message)
